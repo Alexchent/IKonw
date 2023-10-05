@@ -10,7 +10,7 @@
 4.  PHP-FPM： php-fpm 是`php-fastcgi`的进程管理器，有一个master进程和多个worker进程，master与web服务器进行通信，接收请求，再将请求交给woker进程处理
 ## nginx+FastCGI的工作过程
 
-![](assets/php-fpm.webp)
+![](../assets/php-fpm.webp)
 
 nginx与php通信的桥梁是php-fpm
 
