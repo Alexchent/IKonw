@@ -22,6 +22,6 @@
     1. [垃圾回收机制](golang/go的垃圾回收机制.md)
     2. [slice的扩容机制](golang/go的扩容机制.md)
     3. [并发控制sync包](golang/Sync包.md)
-    4. [拼接字符串]()
+    4. [拼接字符串](golang/go拼接字符串.md)
     5. [go goroutine并发原理GPM模型](golang/goroutine.md)
 
