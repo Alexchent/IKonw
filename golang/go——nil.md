@@ -16,7 +16,7 @@
 
 ## nil 是不能比较的
 - 不同类型的nil无法比较
-- 想通类型的nil也无法比较
+- 相同类型的nil也无法比较，特例nil接口可以比较
 
 ```go
 func main() {
@@ -29,6 +29,10 @@ func main() {
 	fmt.Println(a == nil) // true
 	fmt.Println(b == nil) // true
 	//fmt.Println(a == b)   // invalid operation: a == b (slice can only be compared to nil)
+	
+	var c interface{}
+	var d interface{}
+	fmt.Println(c == d) //true
 }
 ```
 

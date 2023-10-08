@@ -38,3 +38,16 @@ func (m *Mutex) Unlock()
 - 加读锁 `func (rw *RWMutex) RLock()`
 - 解读锁 `func (rw *RWMutex) RUnlock()`
 
+
+## mutex 有几种模式
+正常模式和饥饿模式
+### 正常模式
+所有groutine按先进先出的顺序获取锁，被唤醒的goroutine和新请求锁的goroutine，通常新的goroutine更容易获得锁（持续占用CPU）
+
+### 饥饿模式
+所有尝试获取锁的goroutine，都进入队列中排队，新请求锁的goroutine不会进行锁获取（禁用自旋）
+
+### 切换条件
+当一个G等待时间超过1ms，进入饥饿模式；
+
+队列中的所有任务完成，或队列中的G等待时间都低于1ms切回正常模式

@@ -21,7 +21,7 @@
 
 ## G-P-M模型
 
-Go 调度器模型我们通常叫做G-P-M 模型，他包括 4 个重要结构，分别是G、P、M、Sched
+Go 调度器模型我们通常叫做G-P-M 模型，他包括 4 个重要结构，分别是G、P、M、Schedule
 
 G: Goroutine，每个`Goroutine`对应一个 G 结构体，G 存储Goroutine的运行堆栈、状态以及任务函数，可重用。G并非执行体，每个**G需要绑定到P**才能被调度执行
 

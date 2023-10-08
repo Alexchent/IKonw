@@ -1,4 +1,5 @@
 # go学习笔记
+重要的事，看官方文档！！！必须看官方文档，不然，坑得你不要不要的
 
 > [go 简易教程](https://learnku.com/docs/the-little-go-book)
 > 
@@ -7,8 +8,12 @@
 > [官网镜像](http://docscn.studygolang.com/)
 > 
 > [go语言入门教程](http://c.biancheng.net/golang/)
+## go 学习资料
+- [7 个优质开源的 Go 项目](https://juejin.cn/post/7092788846781267975)
+- [go语言101](https://gfw.go101.org/article/101.html)
+- [go编程之旅](https://golang2.eddycjy.com/)
+- [go语言原本](https://golang.design/under-the-hood/)
 
-#### 重要的事，看官方文档！！！必须看官方文档，不然，坑得你不要不要的
 
 ## 安装GO
 
@@ -65,9 +70,9 @@ var week [7] = {0,1,2,3,4,5,6}
 ```
 
 ### 切片Slice
-在go语言中我们很少直接使用数组，取而代之的是 **切片** 又称为 **动态数组** ，相对于数组他的长度是可变的，可以追加元素
+在go语言中我们很少直接使用数组，取而代之的是 **切片** 又称为 **动态数组** ，相对于数组他的长度是可变的，可以追加元素。**slice的底层是数组**指针，因此copy出来的slice修改，会互相影响，在发生扩容之后会生成新的底层数据，其他之间的影响才会切断
 
-```
+```go
 package main
 
 import "fmt"
@@ -95,9 +100,11 @@ func main() {
 ```
 
 ### 集合map
-是一种 **无序** 的 键值对集合，通过key可以快速检索数据（底层由hash表实现）
+是一种 **无序** 的 键值对集合，通过key可以快速检索数据（底层由**hash表**实现）
 
-### 结构体
+range map输出的顺序是不确定的
+
+### 结构体 struct
 可以为不同项定义不同的数据类型。结构体是由一组相同的或不同类型的数据构成的数据集合
 
 ## 关键字range
@@ -113,5 +120,12 @@ func main() {
 - 方法名首字母 **大写** ，表示开放方法，相当于`public`声明，相反的首字母 **小写** 意味着是`private`方法
 
 
-其他教程
+## 其他教程
 > https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/preface.md
+
+
+# Golang新开发者要注意的陷阱和常见错误
+
+> 译文：[Go的50度灰](https://colobu.com/2015/09/07/gotchas-and-common-mistakes-in-go-golang/#%E5%88%9D%E7%BA%A7)
+> 
+> 原文：http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/
