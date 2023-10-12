@@ -9,6 +9,8 @@
 ### MySQL
 1. [MyISAM与InnoDB的区别](mysql/MyISAM与InnoDB.md)
 2. [mysql事务](mysql/mysql事务.md)
+3. [主从同步](mysql/mysql主从复制.md)
+4. [mysql索引优化](mysql/mysql索引优化.md)
 
 ### [Redis](redis/redis.md)
 
