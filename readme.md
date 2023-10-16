@@ -6,6 +6,16 @@
 
 ## 面试知识点
 
+### http
+- [三次握手和四次挥手](http/三次握手和四次挥手.md)
+- [长连接websocket]()
+
+### 微服务
+- [微服务架构]()
+- [GRPC负载均衡LoadBalance]()
+- [etcd实现服务注册、健康检测、服务发现](https://www.cnblogs.com/FireworksEasyCool/p/12890649.html)
+- [分布式事务]()
+
 ### MySQL
 1. [MyISAM与InnoDB的区别](mysql/MyISAM与InnoDB.md)
 2. [mysql事务](mysql/mysql事务.md)
@@ -16,12 +26,11 @@
 
 ### 消息队列 kafka RabbitMQ
 - [kafka](kafka/Kafka常见面试题.md)
-- rabbit
-
-### 数据结构&算法
+- [rabbit]()
+- [最终一致性]()
 
 ### php
-1. 垃圾回收机制
+1. [垃圾回收机制]()
 2. [nginx与php之间的通信过程](PHP/nginx与php之间的通信过程.md)
 3. [主流框架 laravel](PHP/laravel知识点.md)
     1. laravel框架的特点
