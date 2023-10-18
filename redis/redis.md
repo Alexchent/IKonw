@@ -96,6 +96,8 @@ redis 的key寻址用的是hash slot算法
 节点B负责5461~10922号哈希槽
 节点C负责10923~16383号哈希槽
 
+## 怎么控制cluster模式中，key落在指定的slot
+> 集群模式key的含有{}的情况会计算{}中的crc16|64的值。如果用{prefix}做前缀会分配到一个slot
 
 ## 分布式寻址都有哪些算法？
 分布式寻址算法由: hash算法、一致性hash算法、hash slot
@@ -156,8 +158,6 @@ redis 的key寻址用的是hash slot算法
 - 提供人工强制同步功能
 
 [双写一致性](redis和mysql双写一致性.md)
-
-## redis与mecached对比
 
 ## 为什么redis6.0之后改用多线程
 redis使用时几乎不存在cpu成为瓶颈的情况，它主要受限于内存和网络。
