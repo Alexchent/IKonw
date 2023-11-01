@@ -36,20 +36,14 @@ laravel框架就是使用服务容器实现**控制反转**和**依赖注入**
 ](https://learnku.com/articles/4977/laravel-service-container-implementation-principle#029336)
 
 ## laravel框架的特点
-- **简洁优雅**：Laravel提供了清晰、简洁的语法和代码结构，使开发变得更加优雅和易于理解。
-
-- MVC架构：Laravel采用了MVC（Model-View-Controller）架构，将应用程序的不同层进行了清晰的分离，提高了代码的可维护性和可扩展性。
-
+- **简洁优雅的语法**：Laravel提供了简洁、直观的语法和代码结构，使得代码更易于阅读和理解。
+- **MVC架构**：Laravel采用了MVC（Model-View-Controller）架构，将应用程序的不同层进行了清晰的分离，提高了代码的可维护性和可扩展性。
 - **强大的路由系统**：Laravel的路由系统非常灵活，可以轻松地定义URL路由和重定向，使开发者能够更好地管理应用程序的URL结构。
-
 - **数据库迁移**：Laravel提供了数据库迁移工具，可以轻松地管理数据库结构的变更，方便团队协作和版本控制。
-
+- 安全性：提供了多种安全特性，如CSRF保护和XSS保护等
 - **ORM支持**：Laravel集成了Eloquent ORM，提供了简洁、强大的数据库操作接口，使开发者能够更加高效地进行数据库操作。
-
-- 强大的模板引擎：Laravel使用Blade模板引擎，提供了丰富的模板语法和功能，使开发者能够更好地组织和渲染视图。
-
+- **强大的模板引擎**：Laravel使用Blade模板引擎，提供了丰富的模板语法和功能，使开发者能够更好地组织和渲染视图。
 - **丰富的扩展包**：Laravel拥有一个活跃的社区，提供了大量的扩展包，可以轻松地集成各种功能和第三方服务。
-
 - **测试支持**：Laravel内置了强大的测试工具，可以轻松地编写和运行各种单元测试和功能测试，保证应用程序的质量。
 
 ## php框架怎么选
@@ -69,3 +63,40 @@ laravel框架就是使用服务容器实现**控制反转**和**依赖注入**
 第四是上手难度，这方面 `thinkphp` 作为国产框架有很大的优势，并且 `tp8` 吸收了laravel很多的优点 
 
 综上所述，如果是小型项目，可能`tp`更合适，如果是大型项目，需要更多团队成员参与的那`laravel`更合适，如果比较注重性能，可以考虑一下 `yaf`
+
+
+## 功能
+### 事件系统
+**观察者模式**的应用，主要组成部分包括: event类、listener类
+
+可以将多个并行的任务解耦，事件触发者不需要关系监听者的处理结果，只需要时间广播给监听者即可。每个event类都继承了父类的`dispatch`方法，该方便会从**EventServiceProvider**注册的event与lisenter注册表中，读取对应的监听器，并执行其`handle`方法
+
+需要在系统的服务提供者 `App\Providers\EventServiceProvider`中，注册所有时间监听者。
+
+### 队列系统job
+用于处理异步任务，依赖数据库或redis，推荐使用数据库。
+
+1. 用命令创建一个job，会在app/jobs目录下生成相关的job类，handle中编辑任务逻辑
+```
+php artisan make:job EmailJob 
+```
+
+1. 调用任务
+```
+App\JobsE\EmailJob::dispatch($email);
+```
+
+3. 启动队列处理
+```
+php artisan queue:work
+```
+
+### 广播系统
+本质上是利用websocket进行双向通信
+
+### command系统
+### 任务调度 shedule
+### 进程管理
+Laravel 通过 Symfony Process 组件 提供了一个小而美的 API，让你可以方便地从 Laravel 应用程序中**调用外部进程**。 Laravel 的进程管理功能专注于提供最常见的用例和提升开发人员体验。
+
+> [job任务用法](https://learnku.com/articles/75397)

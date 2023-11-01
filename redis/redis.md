@@ -1,8 +1,14 @@
 # reids
-## 实现分布式锁
 
-1. redlock
-2. [redission](./redis分布式锁redission.md)
+## redis的缓存淘汰策略有哪些
+- volatite-lru     设置了过期时间的key进行LRU
+- volitate-lfu     设置了过期时间的key进行LFU
+- volitate-random  设置了过期时间的key进行随机删除
+- volatite-ttl     删除即将过期的key
+- allkeys-lru
+- allkeys-lfu
+- allkeys-random
+- noeviction       永不过期
 
 ## 持久化机制 
 redis有两种持久化方式：RDB和AOF
@@ -77,24 +83,12 @@ cluster可以说是sentinel和主从模式的结合，每个集群至少需要3�
 3. 缓存空结果，设置较短的过期时间 
 ```
 
-## 大key问题
-[大key问题](bigkey和hotkey.md)
-
 ## redis原子性的理解
     
 1. 因为redis的每个命令都是单线程执行的，避免多线程的上下文切换和锁开销
 2. 通过lua脚本实现多条命令执行的原子性
 
-## 在集群模式下，Redis 的 Key 是如何寻址的？
-redis 的key寻址用的是hash slot算法
 
-插槽算法把整个数据库被分为**16384**个slot（槽），每个进入Redis的键值对，根据key进行散列，分配到这16384插槽中的一个。使用的哈希映射也比较简单，用CRC16算法计算出一个16 位的值，再对16384取模。数据库中的每个键都属于这16384个槽的其中一个，集群中的每个节点都可以处理这16384个槽。
-
-集群中的每个节点负责一部分的hash槽，比如当前集群有A、B、C个节点，每个节点上的哈希槽数 =16384/3，那么就有：
-
-节点A负责0~5460号哈希槽
-节点B负责5461~10922号哈希槽
-节点C负责10923~16383号哈希槽
 
 ## 怎么控制cluster模式中，key落在指定的slot
 > 集群模式key的含有{}的情况会计算{}中的crc16|64的值。如果用{prefix}做前缀会分配到一个slot

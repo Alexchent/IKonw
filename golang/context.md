@@ -1,13 +1,19 @@
-# go context
+# context.Context
 
-go在1.7引入了 `context`包，目的是**在不同grouine之间或跨API边界传递超时、取消信号，以及共享上下文信息**
+go在1.7引入了 `context`包，目的是**在不同grouine之间传递截止日期、取消信号，以及共享上下文信息**
 
-在 Go 的日常开发中，`Context` 上下文对象无处不在，无论是处理网络请求、数据库操作还是调用 RPC 等场景下，都会使用到 Context
+在 Go 的日常开发中，`Context` 上下文对象无处不在，无论是处理网络请求、数据库操作还是调用 RPC 等场景下，都会使用到Context
+
+## 作用
+在 Goroutine 构成的树形结构中对**信号进行同步以减少计算资源的浪费是 context.Context 的最大作用**。
+![](../assets/golang-context-usage.png)
+
+每个context.Context都会从最顶层的goroutine一层一层传递到最下一层，可以上层goroutine执行失败时，及时将信号同步给下层，避免资源浪费。
 
 ## 创建context的方式
 - context.Background()
 - context.TODO()
-- context.Value()
+- context.withValue()
 - context.WithCancel()
 - context.WithCancelCause() // 附加取消的原因
 - context.WithDeadline()
@@ -50,5 +56,9 @@ defer cancelFunc()
 ```
 
 ### context.WithTimeout()
+功能和`WithDeadline()`是一样的，低底层也是调用的`WithDeadline()`，区别是它传入的是一个时间，比如2s后超时
+```
+ctx, cancel := context.WithTimeout(parentCtx, 2 * time.Second)
+```
 
 > [一文掌握go并发模式context上下文](https://juejin.cn/post/7233981178101186619)

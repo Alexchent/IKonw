@@ -116,9 +116,11 @@ ack=0 表示无需确认；ack=1 表示只需要leader副本确认；ack=-1 表�
   使用High-Level API，可能出现的问题是，当消费者从kafka中取出消息，并提交新的offset后，还没来得及消费就挂掉了，那么就造成了数据丢失。（此时数据并没有真的消失，而是消费位移忽略了它）
   
 ## 16. kafka 消息顺序性
+> Events with the same event key (e.g., a customer or vehicle ID) are written to the same partition
 
-> 一般而言，在需要保证消息顺序的场合建议把参数 `max.in.flight.requests.per.connection`配置为1，而不是把 `retries` 配置为0，不过这样也会影响整体的吞吐。
+kafka的topic是分片的，发布到一个topic中的event会被分配到某个分片中，**kafka中同一个分片的消息是顺序的，有相同event key的event会被写入到同一个分片中**，消费者可以按事件写入的顺序读取数据
 
+一般而言，在需要保证消息顺序的场合建议把参数 `max.in.flight.requests.per.connection`配置为1，而不是把 `retries` 配置为0，不过这样也会影响整体的吞吐。
 
 ## 17. kafka 为什么不支持读写分离
 
@@ -140,8 +142,48 @@ offset+1
 
 ## 20. kafka如何实现延迟队列
 
-Kafka并没有使用JDK自带的Timer或者DelayQueue来实现延迟的功能，而是基于时间轮自定义了一个用于实现延迟功能的定时器（SystemTimer）。JDK的Timer和DelayQueue插入和删除操作的平均时间复杂度为O(nlog(n))，并不能满足Kafka的高性能要求，而基于时间轮可以将插入和删除操作的时间复杂度都降为O(1)。时间轮的应用并非Kafka独有，其应用场景还有很多，在Netty、Akka、Quartz、Zookeeper等组件中都存在时间轮的踪影。
 
-底层使用数组实现，数组中的每个元素可以存放一个TimerTaskList对象。TimerTaskList是一个环形双向链表，在其中的链表项TimerTaskEntry中封装了真正的定时任务TimerTask.
+## 21.kafka 与rabbitmq的区别
+> Events in a topic can be read as often as needed—unlike traditional messaging systems, events are not deleted after consumption. Instead, you define for how long Kafka should retain your events through a per-topic configuration setting, after which old events will be discarded. Kafka's performance is effectively constant with respect to data size, so storing data for a long time is perfectly fine.
 
-Kafka中到底是怎么推进时间的呢？Kafka中的定时器借助了JDK中的DelayQueue来协助推进时间轮。具体做法是对于每个使用到的TimerTaskList都会加入到DelayQueue中。Kafka中的TimingWheel专门用来执行插入和删除TimerTaskEntry的操作，而DelayQueue专门负责时间推进的任务。再试想一下，DelayQueue中的第一个超时任务列表的expiration为200ms，第二个超时任务为840ms，这里获取DelayQueue的队头只需要O(1)的时间复杂度。如果采用每秒定时推进，那么获取到第一个超时的任务列表时执行的200次推进中有199次属于“空推进”，而获取到第二个超时任务时有需要执行639次“空推进”，这样会无故空耗机器的性能资源，这里采用DelayQueue来辅助以少量空间换时间，从而做到了“精准推进”。Kafka中的定时器真可谓是“知人善用”，用TimingWheel做最擅长的任务添加和删除操作，而用DelayQueue做最擅长的时间推进工作，相辅相成。
+kafka的消息，这里称为事件
+kafka的事件可以被永久的存储在topic中，topic中的事件可以根据需要重复读取，不会像传统的MQ那样，被在消费后就删除。可以对topic设置事件保留时间，旧的事件将被丢弃。
+
+## 22.kafka为什么快
+1. **分布式架构分区和副本机制**：可以将数据分散存储到多个节点，实现并行处理和负载均衡。这样可以挺高整理的吞吐量和处理能力
+2. **高效的存储机制**：磁盘线性访问的性能已经非常高了，某些时候比内存随机访问还要快，kafka利用次特性将数据以分段日志的形式持久化到磁盘上。这种存储方式可以高效的追加写入数据，同时支持高吞吐量的顺序读取
+3. **零拷贝技术**：kafka利用零拷贝技术在**数据传输**过程中避免了不必要的内存拷贝操作，直接操作操作系统的缓存区，减少了CPU的开销，提高了传输效率
+4. **批量处理和压缩**：kafka支持批量处理消息，减少了网络开销和IO操作。此外kafka还支持消息压缩，可以减少数据传输的大小，提高网络传输效率
+5. 高效的消费者模型：kafka的消费者采用拉取模式，消费者可以根据自己的处理能力主动拉取数据，而不是被动接受。这样可以根据消费者的处理能力进行调节，避免消息堆积，提供低的端到端延迟。
+
+总结：kafka的高性能主要取决于其分布式架构、高效的磁盘存储，零拷贝机制，批量消息处理和压缩功能，以及高效的消费者模型。
+
+
+## rabalance
+rebalance就是重新进行分片的分配
+
+## 什么时候发生rebalance
+- 订阅topic的分区数发生变化
+- 订阅topic的个数发生变化
+- 消费组内的成员个数发生变化
+
+rebalance发生时，消费组内的消费者会停止工作，一起参与rebalance
+
+## rebalance问题的处理
+我们主要需要考虑的是消费组内成员崩溃被动离开导致的rebalance问题
+
+kafka判断consumer崩溃有两个标准：
+1. 心跳时间超时
+2. 消费处理超时
+
+我们可以针对性的调整配置：
+- 设置合理的心跳超时时间和心跳间隔时间。（阿里推荐的配置是超时时间25s，心跳间隔时间10s）
+- 增加消费者处理时间，减少每次处理的消息数（阿里建议 消费数要元小于消费组的处理能力：records < 单个线程每秒消费数 * 消费线程数 * session.timeout的秒数）
+
+> session.timeout.ms 设置了超时时间
+> heartbeat.interval.ms 心跳时间间隔
+> max.poll.interval.ms 每次消费的处理时间
+> max.poll.records 每次消费的消息数
+
+参考文件：[面对kafka频发的rebalance，该如何处理？](https://juejin.cn/post/7047754682743128078)
+

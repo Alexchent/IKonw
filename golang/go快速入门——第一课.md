@@ -33,8 +33,6 @@ source ~/.profile
 
 设置GOPROXY=direct
 
-![](../assets/16288472977494.jpg)
-
 ## 3. go quickstart
 
 1. 创建一个项目文件夹，存放你的go源码
