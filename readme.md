@@ -2,6 +2,9 @@
 ## http
 - [三次握手和四次挥手](http/三次握手和四次挥手.md)
 - [TCP滑动窗口](http/tcp滑动窗口.md)
+- [TCP与UDP](http/TCP与UDP.md)
+- [http与websocket](http/websocket.md)
+- [常见的错误码](http/HTTP常见错误码.md)
 
 ## 安全
 - [常见的网络攻击](safe/网络安全.md)
@@ -16,6 +19,11 @@
 2. [mysql事务](mysql/mysql事务.md)
 3. [主从同步](mysql/mysql主从复制.md)
 4. [mysql索引优化](mysql/mysql索引优化.md)
+5. [慢查询分析explain](https://zhuanlan.zhihu.com/p/164897114)
+6. [tinyint和int](mysql/tinyint和int.md)
+
+## ES
+1. [ElasticSearch分词器](ElasticSearch分词器.md)
 
 ## clickhouse
 1. [clickhouse](clickhouse.md)
@@ -29,19 +37,22 @@
 
 ## 消息队列 kafka RabbitMQ
 - [kafka](kafka/Kafka常见面试题.md)
-- [rabbit]()
-- [最终一致性]()
+
+## 分布式事务
+[分布式事务](分布式事务.md)
 
 ## 微服务
-- [微服务架构]()
+- [微服务架构](微服务.md)
 - [GRPC负载均衡LoadBalance]()
 - [etcd实现服务注册、健康检测、服务发现](https://www.cnblogs.com/FireworksEasyCool/p/12890649.html)
 
 ## docker
 - [docker与虚拟机VM的区别](https://blog.csdn.net/K_520_W/article/details/111304146) 
+- [dockerfile](https://www.runoob.com/docker/docker-dockerfile.html)
 
 ## 设计模式
 - [Gof](设计模式.md)
+
 ## php
 1. [垃圾回收机制](PHP/PHP垃圾回收机制.md)
 2. [nginx与php之间的通信过程](PHP/nginx与php之间的通信过程.md)
@@ -51,6 +62,7 @@
 1. [go常见问题](golang/go细节.md)
 2. [垃圾回收机制](golang/go的垃圾回收机制.md)
 3. [go的内存分配](golang/go的内存分配.md)
+4. [go内存逃逸](golang/go内存逃逸.md)
 5. [goroutine内存泄露](golang/go内存泄露.md)
 6. [go并发控制几种方式](golang/go并发控制.md)
 7. [终止goroutine的方式](golang/终止goroutine的方式.md)
@@ -60,6 +72,7 @@
 11. [channel 关闭引发的painc](golang/close-channel-painc.md)
 12. [八股文](https://juejin.cn/post/7029704699435548679)
 13. [性能分析工具pprof](golang/pprof.md)
+
 
 ### 常用包
 - [context](golang/context.md)
@@ -123,6 +136,9 @@ tcpdump portrange 8000-8080
 
 
 # 实战问题分析
+## 从0到1构建产品
+[从0到1构建产品](从0到1构建产品.md)
+
 ## 分表分库后的分页需求
 1. 对于统计需求，需要单独提供report服务，对统计维度数据预处理生成；
 对于元数据需要，产品层面禁止多维度排序，同时只允许当维度的排序。分页方案，简化处理可以采用通用的下来刷新框架，每次传入偏移量和读取数据的条目
@@ -140,7 +156,9 @@ tcpdump portrange 8000-8080
 只允许一个排序条件，这样进去排序字段所在表排序即可
 
 ## 数据库读写分离，数据不一致
-在关注数据一致性的场景中，可以设置直接读取master库。比如通过redis继续记录100ms改变的table，自动路由到master库。
+在关注数据一致性的场景中，
+1. 可以设置直接读取master库。
+2. 比如通过redis继续记录1s改变的table，自动路由到master库。
 
 ## 最大的挑战&&最有成就的
 参与架构设计，数据库的分表分库，通过shopId分库，订单表按时间范围分表，生成的订单需要包含时间因子，便于通过订单号确认分表的hash
@@ -165,5 +183,4 @@ range
 高内聚即服务、类、函数实现单一职责，不可再分割；低耦合，可以认为是一处需要改动，尽快能较少对其他地方的影响。
 
 典型问题：
-1. 到时都是原生sql对数据的操作，没有统一的数据服务层。最好遵循面向接口编程原则，统一提供服务，再实现具体功能类，提高扩展性和健壮性，为以后的扩展提供空间。
-2. 服务冗余，存在同样的服务
+1. 没有统一封装的数据服务层，都是直接的DB操作。必须遵循面向接口编程原则，统一提供服务，再实现具体功能类，提高扩展性和健壮性，为以后的扩展提供空间。 

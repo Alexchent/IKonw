@@ -1,7 +1,7 @@
 # go 拼接字符串的方式
 - 通过 + 拼接 `a := "hello" + "world"`
 - fmt.Sprintf()
-- strings.joins()
+- strings.Join()
 - strings.Builder()
 - bytes.Builder()
 

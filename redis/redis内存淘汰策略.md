@@ -16,9 +16,9 @@ hz 10 //表示每秒运行10次,不要超过100，对CPU不友好
 
 ## 3.当前已用内存超过maxmemory时，触发主动清理策略
 
-- volatile-lru：只对设置了过期时间的key进行LRU（==默认值==）
+- volatile-lru：只对设置了过期时间的key进行LRU **默认值**
 - allkeys-lru ：删除lru算法的key
-- volatile-lfu：只对设置了过期时间的key进行LFU（lru算法的增强版，key的最近使用时间和累计使用次数进行平衡）
+- volatile-lfu：只对设置了过期时间的key进行LFU
 - allkeys-lfu ：删除lfu算法的key
 - volatile-random：随机删除即将过期key
 - allkeys-random：随机删除
@@ -26,7 +26,7 @@ hz 10 //表示每秒运行10次,不要超过100，对CPU不友好
 - noeviction ：永不过期，返回错误
 
 > LRU Least Recently Used 最近使用的最少使用的
-
+>
 > LFU Least Frequently Used 使用频率最少的
 
 对应配置

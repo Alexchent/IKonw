@@ -140,9 +140,6 @@ kafka每个partition中的消息在写入时都是有序的，消费时，每个
 
 offset+1
 
-## 20. kafka如何实现延迟队列
-
-
 ## 21.kafka 与rabbitmq的区别
 > Events in a topic can be read as often as needed—unlike traditional messaging systems, events are not deleted after consumption. Instead, you define for how long Kafka should retain your events through a per-topic configuration setting, after which old events will be discarded. Kafka's performance is effectively constant with respect to data size, so storing data for a long time is perfectly fine.
 
@@ -150,8 +147,8 @@ kafka的消息，这里称为事件
 kafka的事件可以被永久的存储在topic中，topic中的事件可以根据需要重复读取，不会像传统的MQ那样，被在消费后就删除。可以对topic设置事件保留时间，旧的事件将被丢弃。
 
 ## 22.kafka为什么快
-1. **分布式架构分区和副本机制**：可以将数据分散存储到多个节点，实现并行处理和负载均衡。这样可以挺高整理的吞吐量和处理能力
-2. **高效的存储机制**：磁盘线性访问的性能已经非常高了，某些时候比内存随机访问还要快，kafka利用次特性将数据以分段日志的形式持久化到磁盘上。这种存储方式可以高效的追加写入数据，同时支持高吞吐量的顺序读取
+1. **分布式架构分区和副本机制**：可以将数据分散存储到多个节点，实现并行处理和负载均衡。这样可以提高整体的吞吐量和处理能力
+2. **高效的存储机制**：磁盘线性访问的性能已经非常高了，某些时候比内存随机访23ew问还要快，kafka利用次特性将数据以分段日志的形式持久化到磁盘上。这种存储方式可以高效的追加写入数据，同时支持高吞吐量的顺序读取
 3. **零拷贝技术**：kafka利用零拷贝技术在**数据传输**过程中避免了不必要的内存拷贝操作，直接操作操作系统的缓存区，减少了CPU的开销，提高了传输效率
 4. **批量处理和压缩**：kafka支持批量处理消息，减少了网络开销和IO操作。此外kafka还支持消息压缩，可以减少数据传输的大小，提高网络传输效率
 5. 高效的消费者模型：kafka的消费者采用拉取模式，消费者可以根据自己的处理能力主动拉取数据，而不是被动接受。这样可以根据消费者的处理能力进行调节，避免消息堆积，提供低的端到端延迟。
@@ -159,17 +156,17 @@ kafka的事件可以被永久的存储在topic中，topic中的事件可以根�
 总结：kafka的高性能主要取决于其分布式架构、高效的磁盘存储，零拷贝机制，批量消息处理和压缩功能，以及高效的消费者模型。
 
 
-## rabalance
+## 23. rabalance
 rebalance就是重新进行分片的分配
 
-## 什么时候发生rebalance
+### 什么时候发生rebalance
 - 订阅topic的分区数发生变化
 - 订阅topic的个数发生变化
 - 消费组内的成员个数发生变化
 
 rebalance发生时，消费组内的消费者会停止工作，一起参与rebalance
 
-## rebalance问题的处理
+### rebalance问题的处理
 我们主要需要考虑的是消费组内成员崩溃被动离开导致的rebalance问题
 
 kafka判断consumer崩溃有两个标准：
@@ -187,3 +184,14 @@ kafka判断consumer崩溃有两个标准：
 
 参考文件：[面对kafka频发的rebalance，该如何处理？](https://juejin.cn/post/7047754682743128078)
 
+
+## 消息积压怎么处理
+
+临时扩容，以更快的速度消费。
+
+步骤：
+1. 修复consumer的问题，确保消费速度，然后将现有consumer停掉
+2. 新建一个topic，分片是原先的10倍
+3. 写一个临时分发消息的consumer程序，去消费积压的消息，不做任何消失操作，直接均匀轮询将消息写入新的topic
+4. 部署10倍的consumer来消费临时的topic
+5. 积压消息处理完毕后，恢复原来的架构
