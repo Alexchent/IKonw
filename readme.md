@@ -107,7 +107,7 @@ awk 'length($0)>80 {print $0, NR}' have_save_file.txt
 ### sed 一种行编辑器
 `-n`：sed会在处理一行文本前，将待处理的文本打印出来，-n参数关闭了这个功
 `p`：表示打印，
-`$`：表示最好一行
+`$`：表示最后一行
 1. 打印文件`have_save_file.txt`的第2到10行
 ```
 sed -n '2,10'p have_save_file.txt
