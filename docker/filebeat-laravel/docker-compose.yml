@@ -1,0 +1,14 @@
+version: "3.7"
+services:
+  filebeat:
+    container_name: filebeat
+    image: store/elastic/filebeat:7.1.1
+    command: --strict.perms=false
+    networks:
+      - custom
+    volumes:
+      - ${PWD}/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ~/Sites/Laravel7/storage/logs/:/var/log/laravel/
+
+networks:
+  custom:

@@ -1,0 +1,20 @@
+filebeat.inputs:
+  - type: log
+    paths:
+      - /var/logs/laravel/*.log
+    multiline.pattern: '^\[[0-9]{4}-[0-9]{2}-[0-9]{2}'
+    multiline.negate: true
+    multiline.match: after
+    multiline.timeout: 5s
+    scan_frequency: 5s
+    fields:
+      index: 'laravel-log'
+
+
+output.redis:
+  # Array of hosts to connect to.
+  hosts: ["127.0.0.1:6379"]
+  enabled: true
+  db: "1"
+  timeout: 5
+  key: "%{[fields.index]:otherIndex}"

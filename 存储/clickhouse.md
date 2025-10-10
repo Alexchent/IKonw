@@ -1,4 +1,6 @@
-# clickhouse
+# clickhouse 使用指南
+
+> [什么是clickhouse](https://clickhouse.com/docs/zh/)
 
 ClickHouse是一个用于联机分析(OLAP)的列式数据库管理系统(DBMS)。
 
@@ -17,10 +19,40 @@ OLAP适用于数据分析，OLTP适用于事务处理
 ### 向量引擎
 为了高效的使用CPU，数据不仅仅按列存储，同时还按向量(列的一部分)进行处理，这样可以更加高效地使用CPU
 
-
 ### 实时的数据更新
 ClickHouse支持在表中定义主键。为了使查询能够快速在主键中进行范围查找，数据总是以增量的方式有序的存储在MergeTree中。因此，数据可以持续不断地高效的写入到表中，并且写入的过程中不会存在任何加锁的行为。
 
 ### 索引
 按照主键对数据进行排序，这将帮助ClickHouse在几十毫秒以内完成对数据特定值或范围的查找。
+
+## 安装clickhouse
+> [安装部署](https://clickhouse.com/docs/zh/getting-started/install)
+
+macOS — `curl -O 'https://builds.clickhouse.com/master/macos/clickhouse' && chmod a+x ./clickhouse`
+
+![](assets/16684156848816.jpg)
+
+下载完客户端可以看到 `clickhouse`
+![](assets/16684158926120.jpg)
+
+试用一下，访问官方提供的demo，看看效果
+```bash
+./clickhouse client --secure --host play.clickhouse.com --user explorer
+```
+## clickhouse-client
+
+```bash
+clickhouse-client -h 10.46.12.59 -u default --password zgsjkhnb -m
+```
+
+如下图所示，我们已经链接成功
+![](assets/16684160325048.jpg)
+
+## SQL
+> [systems.columns](https://clickhouse.com/docs/zh/operations/system-tables/columns/) 此系统表包含所有表中列的信息
+```sql
+-- 显示clickhouse表字段名、字段类型已经注释
+select database,name,type,comment from `system`.columns where database = 'blogs' and table ='countries'
+```
+
 
