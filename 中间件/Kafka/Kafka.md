@@ -72,25 +72,31 @@ Kafka 为分区引入了多**副本**（Replica）机制，通过增加副本数
 
 需要注意的是，**分区平衡并不意味着 Kafka 集群的负载均衡**，因为还要考虑集群中的分区分配是否均衡。更进一步，每个分区的 leader 副本的负载也是各不相同的，有些 leader 副本的负载很高，比如需要承载 TPS 为30000的负荷，而有些 leader 副本只需承载个位数的负荷。也就是说，就算集群中的分区分配均衡、leader 分配均衡，也并不能确保整个集群的负载就是均衡的，还需要其他一些硬性的指标来做进一步的衡量，这个会在后面的章节中涉及，本节只探讨优先副本的选举。
 
-不过在生产环境中不建议将 `auto.leader.rebalance.enable` 设置为默认的 true，因为这可能引起负面的性能问题，也有可能引起客户端一定时间的阻塞
-
-`kafka-leader-election.sh` 脚本提供了对分区 leader 副本进行重新平衡的功能。
-
 
 ## 4. 分区重新分配
+**不过在生产环境中不建议将 `auto.leader.rebalance.enable` 设置为默认的 true，因为这可能引起负面的性能问题，也有可能引起客户端一定时间的阻塞**
+ 
+`kafka-leader-election.sh` 脚本提供了对分区 leader 副本进行重新平衡的功能。
 
 需要进行分区迁移的场景：
 - **集群扩容**
 - **broker 节点失效**
  
-`kafka-reassign-partitions.sh` 脚本的使用分为3个步骤：首先创建需要一个包含主题清单的 JSON 文件，其次根据主题清单和 broker 节点清单生成一份重分配方案，最后根据这份方案执行具体的重分配动作。
+`kafka-reassign-partitions.sh` 脚本的使用分为3个步骤：
+- 首先创建需要一个包含主题清单的 JSON 文件
+- 其次根据主题清单和 broker 节点清单生成一份重分配方案
+- 最后根据这份方案执行具体的重分配动作
 
-下面我们通过一个具体的案例来演示 kafka-reassign-partitions.sh 脚本的用法。首先在一个由3个节点（broker 0、broker 1、broker 2）组成的集群中创建一个主题 topic-reassign，主题中包含4个分区和2个副本：
+下面我们通过一个具体的案例来演示 `kafka-reassign-partitions.sh` 脚本的用法。
+首先在一个由3个节点（broker 0、broker 1、broker 2）组成的集群中创建一个主题 topic-reassign，主题中包含4个分区和2个副本：
+```bash
+# 创建topic
+bin/kafka-topics.sh --zookeeper localhost:2181/ kafka --create --topic topic-reassign --replication-factor 2 --partitions 4
+
+# 显示主题信息
+bin/kafka-topics.sh --zookeeper localhost:2181/ kafka --describe --topic topic-reassign
 ```
-[root@node1 kafka_2.11-2.0.0]# bin/kafka-topics.sh --zookeeper localhost:2181/ kafka --create --topic topic-reassign --replication-factor 2 --partitions 4
-Created topic "topic-reassign".
-
-[root@node1 kafka_2.11-2.0.0]# bin/kafka-topics.sh --zookeeper localhost:2181/ kafka --describe --topic topic-reassign
+```
 Topic:topic-reassign	PartitionCount:4	ReplicationFactor:2	Configs: 
     Topic: topic-reassign	Partition: 0	Leader: 0	Replicas: 0,2	Isr: 0,2
     Topic: topic-reassign	Partition: 1	Leader: 1	Replicas: 1,0	Isr: 1,0
@@ -98,21 +104,23 @@ Topic:topic-reassign	PartitionCount:4	ReplicationFactor:2	Configs:
     Topic: topic-reassign	Partition: 3	Leader: 0	Replicas: 0,1	Isr: 0,1
 ```
 
-我们可以观察到主题 topic-reassign 在3个节点中都有相应的分区副本分布。由于某种原因，我们想要下线 brokerId 为1的 broker 节点，在此之前，我们要做的就是将其上的分区副本迁移出去。使用 kafka-reassign-partitions.sh 脚本的第一步就是要创建一个 JSON 文件（文件的名称假定为 reassign.json），文件内容为要进行分区重分配的主题清单。对主题 topic-reassign 而言，示例如下：
-```
+我们可以观察到主题 topic-reassign 在3个节点中都有相应的分区副本分布。由于某种原因，我们想要下线 brokerId 为1的 broker 节点，在此之前，我们要做的就是将其上的分区副本迁移出去。使用 `kafka-reassign-partitions.sh` 脚本的第一步就是要创建一个 JSON 文件（文件的名称假定为 reassign.json），文件内容为要进行分区重分配的主题清单。对主题 topic-reassign 而言，示例如下：
+```json
 {
-        "topics":[
-                {
-                        "topic":"topic-reassign"
-                }
-        ],
-        "version":1
+    "topics":[
+        {
+            "topic":"topic-reassign"
+        }
+    ],
+    "version":1
 }
 ```
 
 第二步就是根据这个 JSON 文件和指定所要分配的 broker 节点列表来生成一份候选的重分配方案，具体内容参考如下：
+```bash
+bin/kafka-reassign-partitions.sh --zookeeper localhost:2181/kafka --generate --topics-to-move-json-file reassign.json --broker-list 0,2
 ```
-[root@node1 kafka_2.11-2.0.0]# bin/kafka-reassign-partitions.sh --zookeeper localhost:2181/kafka --generate --topics-to-move-json-file reassign.json --broker-list 0,2
+```
 Current partition replica assignment
 {"version":1,"partitions":[{"topic":"topic-reassign","partition":2,"replicas":[2,1],"log_dirs":["any","any"]},{"topic":"topic-reassign","partition":1,"replicas":[1,0],"log_dirs":["any","any"]},{"topic":"topic-reassign","partition":3,"replicas":[0,1],"log_dirs":["any","any"]},{"topic":"topic-reassign","partition":0,"replicas":[0,2],"log_dirs":["any","any"]}]}
 
@@ -120,26 +128,25 @@ Proposed partition reassignment configuration
 {"version":1,"partitions":[{"topic":"topic-reassign","partition":2,"replicas":[2,0],"log_dirs":["any","any"]},{"topic":"topic-reassign","partition":1,"replicas":[0,2],"log_dirs":["any","any"]},{"topic":"topic-reassign","partition":3,"replicas":[0,2],"log_dirs":["any","any"]},{"topic":"topic-reassign","partition":0,"replicas":[2,0],"log_dirs":["any","any"]}]}
 ```
 
-上面的示例中包含4个参数，其中 zookeeper 已经很常见了，用来指定 ZooKeeper 的地址。generate 是 kafka-reassign-partitions.sh 脚本中指令类型的参数，可以类比于 kafka-topics.sh 脚本中的 create、list 等，它用来生成一个重分配的候选方案。topic-to-move-json 用来指定分区重分配对应的主题清单文件的路径，该清单文件的具体的格式可以归纳为{"topics": [{"topic": "foo"},{"topic": "foo1"}],"version": 1}。broker-list 用来指定所要分配的 broker 节点列表，比如示例中的“0,2”。
+上面的示例中包含4个参数，其中 <u>zookeeper</u> 用来指定 ZooKeeper 的地址。<u>generate</u> 是 **kafka-reassign-partitions.sh** 脚本中指令类型的参数，可以类比于 kafka-topics.sh 脚本中的 create、list 等，它用来生成一个重分配的候选方案。topic-to-move-json 用来指定分区重分配对应的主题清单文件的路径，该清单文件的具体的格式可以归纳为{"topics": [{"topic": "foo"},{"topic": "foo1"}],"version": 1}。broker-list 用来指定所要分配的 broker 节点列表，比如示例中的“0,2”。
 
 上面示例中打印出了两个 JSON 格式的内容。第一个“Current partition replica assignment”所对应的 JSON 内容为当前的分区副本分配情况，在执行分区重分配的时候最好将这个内容保存起来，以备后续的回滚操作。第二个“Proposed partition reassignment configuration”所对应的 JSON 内容为重分配的候选方案，注意这里只是生成一份可行性的方案，并没有真正执行重分配的动作。生成的可行性方案的具体算法和创建主题时的一样，这里也包含了机架信息，具体的细节可以参考17节的内容。
 
 我们需要将第二个 JSON 内容保存在一个 JSON 文件中，假定这个文件的名称为 project.json。
 
-第三步执行具体的重分配动作，详细参考如下：
+第三步 执行具体的重分配动作，详细参考如下：
+```bash
+# 执行重新分配的动作
+bin/kafka-reassign-partitions.sh --zookeeper localhost:2181/kafka --execute --reassignment-json-file project.json 
 ```
-[root@node1 kafka_2.11-2.0.0]# bin/kafka-reassign-partitions.sh --zookeeper localhost:2181/kafka --execute --reassignment-json-file project.json 
-Current partition replica assignment
-
-{"version":1,"partitions":[{"topic":"topic-reassign","partition":2,"replicas":[2,1],"log_dirs":["any","any"]},{"topic":"topic-reassign","partition":1,"replicas":[1,0],"log_dirs":["any","any"]},{"topic":"topic-reassign","partition":3,"replicas":[0,1],"log_dirs":["any","any"]},{"topic":"topic-reassign","partition":0,"replicas":[0,2],"log_dirs":["any","any"]}]}
-
-Save this to use as the --reassignment-json-file option during rollback
-Successfully started reassignment of partitions.
-```
+*execute* 是指令类型的参数，用来指定执行重分配的动作。*reassignment-json-file* 指定分区重分配方案的文件路径，对应于示例中的 project.json 文件。
 
 我们再次查看主题 topic-reassign 的具体信息：
+```bash
+bin/kafka-topics.sh --zookeeper localhost:2181/ kafka --describe --topic topic-reassign
 ```
-[root@node1 kafka_2.11-2.0.0]# bin/kafka-topics.sh --zookeeper localhost:2181/ kafka --describe --topic topic-reassign
+
+```
 Topic:topic-reassign	PartitionCount:4	ReplicationFactor:2	Configs: 
     Topic: topic-reassign	Partition: 0	Leader: 0	Replicas: 2,0	Isr: 0,2
     Topic: topic-reassign	Partition: 1	Leader: 0	Replicas: 0,2	Isr: 0,2
@@ -147,9 +154,8 @@ Topic:topic-reassign	PartitionCount:4	ReplicationFactor:2	Configs:
     Topic: topic-reassign	Partition: 3	Leader: 0	Replicas: 0,2	Isr: 0,2
 ```
 
-可以看到主题中的所有分区副本都只在0和2的 broker 节点上分布了。
+可以看到主题中的所有分区副本都只在0和2的 *broker* 节点上分布了。
 
-在第三步的操作中又多了2个参数，execute 也是指令类型的参数，用来指定执行重分配的动作。reassignment-json-file 指定分区重分配方案的文件路径，对应于示例中的 project.json 文件。
 
 分区重分配的**基本原理**是： 先通过控制器为每个分区添加新副本（增加副本因子），新的副本将从分区的 leader 副本那里复制所有的数据。根据分区的大小不同，复制过程可能需要花一些时间，因为数据是通过网络复制到新副本上的。在复制完成之后，控制器将旧副本从副本清单里移除（恢复为原先的副本因子数）。注意在重分配的过程中要确保有足够的空间。
 
@@ -163,11 +169,11 @@ Reassignment of partition topic-reassign-3 completed successfully
 Reassignment of partition topic-reassign-0 completed successfully
 ```
 
-分区重分配对集群的性能有很大的影响，需要占用额外的资源，比如网络和磁盘。在实际操作中，我们将**降低重分配的粒度**，分成多个小批次来执行，以此来将负面的影响降到最低，这一点和优先副本的选举有异曲同工之妙。 还需要注意的是，如果要将某个 broker 下线，那么在执行分区重分配动作之前**最好先关闭或重启 broker**。这样这个 broker 就不再是任何分区的 leader 节点了，它的分区就可以被分配给集群中的其他 broker。这样可以减少 broker 间的流量复制，以此提升重分配的性能，以及减少对集群的影响。
+**分区重分配对集群的性能有很大的影响**，需要占用额外的资源，比如网络和磁盘。在实际操作中，我们将**降低重分配的粒度**，分成多个小批次来执行，以此来将负面的影响降到最低，这一点和优先副本的选举有异曲同工之妙。 还需要注意的是，如果要将某个 broker 下线，那么在执行分区重分配动作之前**最好先关闭或重启 broker**。这样这个 broker 就不再是任何分区的 leader 节点了，它的分区就可以被分配给集群中的其他 broker。这样可以减少 broker 间的流量复制，以此提升重分配的性能，以及减少对集群的影响。
 
 ## ZooKeeper
 ZooKeeper 是安装 Kafka 集群的必要组件，Kafka 通过 ZooKeeper 来实施对元数据信息的管理，包括集群、broker、主题、分区等内容。
 
 ZooKeeper 是一个开源的分布式协调服务，是 Google Chubby的一个开源实现。分布式应用程序可以基于 ZooKeeper 实现诸如数据发布/订阅、负载均衡、命名服务、分布式协调/通知、集群管理、Master 选举、配置维护等功能。
 
-在 ZooKeeper 中共有3个角色：leader、follower 和 observer，同一时刻 ZooKeeper 集群中只会有一个 leader，其他的都是 follower 和 observer。observer 不参与投票，默认情况下 ZooKeeper 中只有 leader 和 follower 两个角色。更多相关知识可以查阅 ZooKeeper 官方网站来获得。
+在 ZooKeeper 中共有3个角色：leader、follower 和 observer，同一时刻 ZooKeeper 集群中只会有一个 leader，其他的都是 follower 和 observer。observer 不参与投票，默认情况下 ZooKeeper 中只有 leader 和 follower 两个角色。
